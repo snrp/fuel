@@ -63,28 +63,7 @@ class Pagination {
 	protected static $uri_page = 'page';
 
 	/**
-	 * @var	string	classic | append_get | get_only
-	 * classic - how it was before
-	 * append_get - classic but also add get variables at the end of the url,
-	    via pagination_url as array (containing 3 parameters, named in the same way as the
-		parameters to uri::create() )
-		-the pagination nr will be appended at the end of the $pagination_url['uri'] in this case;
-		-segment nr is the way to get it back 
-		-NOTE: you dont have to use get_variables, leave it empty or set it to empty array,
-		this way you can still append the page nr at the end of url::create(); For example, 
-		set $pagination_nr to empty array, the class will auto load empty defaults for all 3 values
-	 * get_only - $pagination_url is same as above, but pagination nr is put in 
-		$pagination_url['get_variables'][$uri_page];
-			-segment nr is not needed, the pagination nr will be gotten via Input::get();
-			
-		-in order to change the order of the get variables for example to put page first
-			(eg: ?page=2&foo=bar instead of ?foo=bar&page=2 )
-			then do this: 
-				'pagination_url' => array(
-					'url' => ... , 
-					'get_variables' => array('page' => '','foo' => 'bar')
-				);
-			the GET vars will be rendered in the order they are in the array
+	 * @var	string	static::CLASSIC | static::CLASSIC_PLUS | static::GET
 	 */
 	protected static $mode = 0; // static::CLASSIC
 	
@@ -259,7 +238,7 @@ class Pagination {
 	
 	
 	/**
-	 * Get current page from uri with the configured method
+	 * Get current page from uri with the configured static::$mode
 	 *
 	 * @access public
 	 * @param string $page_nr The page nr for the url
@@ -280,7 +259,7 @@ class Pagination {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Pagination url
+	 * Get the pagination url with the configured static::$mode
 	 *
 	 * @access public
 	 * @param string $page_nr The page nr for the url
@@ -294,7 +273,7 @@ class Pagination {
 		  		$page_nr = ($page_nr == 1) ? '' : '/'.$page_nr;
 				return rtrim(static::$pagination_url, '/').$page_nr;
 			
-			//classic but add support for get variables at the end of the url
+			//static::CLASSIC but add support for get variables at the end of the url
 			case static::CLASSIC_PLUS:	
 				//defaults for Uri::create()
 		  		$defaults = array('uri' => NULL,'segment_variables' => array(),	'get_variables' => array());
@@ -308,7 +287,7 @@ class Pagination {
 				// this time \Uri::create is for appending the get_variables
 				return \Uri::create($params['uri'],	$params['segment_variables'], $params['get_variables']);
 		  	
-		  	//put $page_nr in a get variable and append all get vars to the uri
+		  	//put $page_nr in a get_variable, then let Uri::create deal with it
 			case static::GET:
 			  	//defaults for Uri::create()
 		  		$defaults = array('uri' => NULL,'segment_variables' => array(),	'get_variables' => array());
