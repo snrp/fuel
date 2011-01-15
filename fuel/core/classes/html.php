@@ -44,6 +44,23 @@ class Html
 		return html_tag('h'.$num, $attr, $content);
 	}
 
+	//should move this to app/classes/Html; whatever leave it here untill then
+	//if params are strs, classes mst be space separated
+	public static function class_attr($c1, $c2=null)
+	{
+		$c1 = is_string($c1) 
+				? explode(' ', $c1) 
+				: (empty($c1) || ! is_array($c1) ? array() : $c1);
+		$c2 = is_string($c2) 
+				? explode(' ', $c2) 
+				: (empty($c2) || ! is_array($c2) ? array() : $c2);
+		return implode(' ',array_unique(array_merge($c1, $c2), SORT_STRING));
+	}
+
+
+
+
+
 	/**
 	 * Creates an html link
 	 *
