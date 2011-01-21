@@ -130,8 +130,13 @@ class Pagination {
 	 * @access public
 	 * @return mixed    The pagination links
 	 */
-	public static function create_links()
+	public static function create_links($config = array())
 	{
+		if ( ! empty($config))
+		{
+			static::set_config($config);
+		}
+	
 		if (static::$total_pages == 1)
 		{
 			return '';
