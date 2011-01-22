@@ -9,6 +9,12 @@ class Controller_Monkeys extends Controller_Template {
 								    'total_items' => Model_Monkey::count('all'),
 								    'per_page' => $per_page,
 								    'uri_segment' => 3,
+								    'view' => 'common/pagination',
+								    'attributes' => array(
+										'prev_link' => array('title' => 'prev_link' ), 
+										'next_link' => array('title' => 'next_link' ),
+										'number_link' => array('title' => 'number_link' ),
+									),
 		));
 
 		$data['monkeys'] = Model_Monkey::find('all', array(

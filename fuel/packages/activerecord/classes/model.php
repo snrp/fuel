@@ -1023,19 +1023,23 @@ class Model {
 
 		return array('result' => $result, 'column_lookup' => $column_lookup);
 	}
+		
+		
+	/*
+	* see the find() function this is the same, except it returns the count
+	**/
 	
+	public static function count($id = 'all', $options = array())
+	{
+		$instance = new static;
+		$count = $instance->count_query($id, $options);
+		unset($instance);
+
+		return $count;
+		
+	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+		
 	
 	/**
 	 * similar to  @find_query
@@ -1184,21 +1188,9 @@ class Model {
 		return $query->execute()->get('mycount');
 	}
 	
-	/*
-	* see the find() function this is the same, except it returns the count
-	**/
 	
-	public static function count($id = 'all', $options = array())
-	{
-		$instance = new static;
-		$count = $instance->count_query($id, $options);
-		unset($instance);
-
-		return $count;
 		
-	}
-	
-	
+		
 }
 
 

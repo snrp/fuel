@@ -18,6 +18,7 @@ ini_set('display_errors', DEBUG ? '1' : '0');
 Fuel\Core\Autoloader::add_classes(array(
 	// Add classes you want to override here
 	// Example: 'View' => APPPATH.'classes/view.php',
+	'Pagination' => APPPATH.'classes/pagination.php',
 ));
 
 // Register the autoloader
