@@ -1025,9 +1025,18 @@ class Model {
 	}
 		
 		
-	/*
-	* see the find() function this is the same, except it returns the count
-	**/
+	/**
+	 * Exactly as find() but returns the row count see {@link find} 
+	 * all the parameters and options are exactly the same as for find()
+	 *
+	 * Usage:
+	 *
+	 * <code>$user = User::find(2, array('include' => array('group')));</code>
+	 *
+	 * @param	int|string	$id			the primary key value
+	 * @param	srray		$options	the find options
+	 * @return	object		the result
+	 */
 	
 	public static function count($id = 'all', $options = array())
 	{
@@ -1042,8 +1051,8 @@ class Model {
 		
 	
 	/**
-	 * similar to  @find_query
-	 * 
+	 * Generates then executes the count query.  This is used by {@link count}.
+	 * Please see {@link count} for parameter options and usage.
 	 *
 	 * @param	string|int	$id			the primary key to find
 	 * @param	array		$options	the array of options
