@@ -6,25 +6,24 @@ class Controller_Monkeys extends Controller_Template {
 	**/
 	public function action_index()
 	{
-		$per_page = 2;
-		
 		Pagination::set_config(array(
-		    'pagination_url' => \Uri::create('monkeys/index'),
+		    'pagination_url' => Uri::create('monkeys/index'),
 		    'total_items' => Model_Monkey::count('all'),
-		    'per_page' => $per_page,
-		    'uri_segment' => 3,
+		    'per_page' => 3,
+		    
+		    /*'uri_segment' => 3,
 		    'view' => 'common/pagination',
 		    'attributes' => array(
 				'prev_link' => array('title' => 'prev_link' ), 
 				'next_link' => array('title' => 'next_link' ),
 				'number_link' => array('title' => 'number_link' ),
-			),
+			),*/
 		));
 		
 		$data['pagination'] = Pagination::create_links();
 		
 		$data['monkeys'] = Model_Monkey::find('all', array(
-							'limit' => $per_page ,
+							'limit' => Pagination::$per_page ,
 							'offset' => Pagination::$offset,
 		));
 		
@@ -43,6 +42,9 @@ class Controller_Monkeys extends Controller_Template {
 		$this->template->content = View::factory('monkeys/view', $data);
 	}
 	
+	/* 
+	***********************************************************************
+	**/	
 	public function action_create($id = null)
 	{
 		if ($_POST)
@@ -68,7 +70,10 @@ class Controller_Monkeys extends Controller_Template {
 		$this->template->title = "Monkeys";
 		$this->template->content = View::factory('monkeys/create');
 	}
-	
+
+	/* 
+	***********************************************************************
+	**/	
 	public function action_edit($id = null)
 	{
 		$monkey = Model_Monkey::find($id);
@@ -100,6 +105,9 @@ class Controller_Monkeys extends Controller_Template {
 		$this->template->content = View::factory('monkeys/edit');
 	}
 	
+	/* 
+	***********************************************************************
+	**/	
 	public function action_delete($id = null)
 	{
 		$monkey = Model_Monkey::find($id);
@@ -116,8 +124,6 @@ class Controller_Monkeys extends Controller_Template {
 
 		Output::redirect('monkeys');
 	}
-	
-	
 }
 
 /* End of file monkeys.php */

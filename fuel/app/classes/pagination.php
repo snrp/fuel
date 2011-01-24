@@ -71,7 +71,7 @@ class Pagination extends Fuel\Core\Pagination {
 	/**
 	 * @var	mixed	Optional attributes for each <a> tag
 	 */
-	protected static $view = null;
+	protected static $view = 'common/pagination';
 		
 
 	/**
