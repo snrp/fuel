@@ -9,7 +9,7 @@ class Controller_Monkeys extends Controller_Template {
 		Pagination::set_config(array(
 		    'pagination_url' => Uri::create('monkeys/index'),
 		    'total_items' => Model_Monkey::count('all'),
-		    'per_page' => 3,
+		    'per_page' => 2,
 		    
 		    /*'uri_segment' => 3,
 		    'view' => 'common/pagination',

@@ -19,6 +19,6 @@
 	</tr>
 	<?php endforeach; ?></table>
 	<?php echo $pagination; ?>
-<br />
+<br /><br />
 
 <?php echo HTML::anchor('monkeys/create', 'Add new Monkey'); ?>
