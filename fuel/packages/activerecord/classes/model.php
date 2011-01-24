@@ -135,7 +135,7 @@ class Model {
 		}
 		else
 		{
-			$options['where'] = $options['where'] + $where;
+			$options['where'] = array_merge($where, $options['where']);
 		}
 
 		if ( ! array_key_exists('or_where', $options))
@@ -144,7 +144,7 @@ class Model {
 		}
 		else
 		{
-			$options['or_where'] = $options['or_where'] + $or_where;
+			$options['or_where'] = array_merge($or_where, $options['or_where']);
 		}
 
 		return static::find($find_type, $options);
@@ -278,11 +278,12 @@ class Model {
 			$this->table_name = Inflector::tableize($this->class_name);
 		}
 
+		//don't process associacions when instance was created by static::count() 
 		if ($params === self::IS_COUNT)
 		{
 			return;
 		}
-		
+
 		// Setup all the associations
 		foreach ($this->assoc_types as $type)
 		{
@@ -937,13 +938,15 @@ class Model {
 				{
 					foreach ($cols as $key => $col)
 					{
-                                                // Compare the values currently in $select to see if we need to remove them
-                                                if($this->table_name == $table){
-                                                        $foundKey=array_search($col,$select);
-                                                        if($foundKey !== false){
-                                                                unset($select[$foundKey]);
-                                                        }
-                                                }
+						// Compare the values currently in $select to see if we need to remove them
+						if ($this->table_name == $table)
+						{
+								$found_key = array_search($col, $select);
+								if ($found_key !== false)
+								{
+									unset($select[$found_key]);
+								}
+						}
 
 						// Add this to the select array
 						array_push($select, array($table.'.'.$col, "t{$table_key}_r$key"));
@@ -956,26 +959,18 @@ class Model {
 		}
 
 		// Start building the query
-		$query = call_user_func_array('DB::select', $select);
-
-		$query->from($this->table_name);
-
-		foreach ($joins as $join)
+		if ( ! empty($joins) and ( ! empty($options['limit']) or ! empty($options['offset'])))
 		{
-			if ( ! array_key_exists('table', $join))
-			{
-				foreach ($join as $j)
-				{
-					$query->join($j['table'], $j['type'])
-						  ->on($j['on'][0], $j['on'][1], $j['on'][2]);
-				}
-			}
-			else
-			{
-				$query->join($join['table'], $join['type'])
-					  ->on($join['on'][0], $join['on'][1], $join['on'][2]);
-			}
+			$query = DB::select('*');
+			$fullquery = call_user_func_array('DB::select', $select);
 		}
+		else
+		{
+			$query = call_user_func_array('DB::select', $select);
+		}
+
+		// Set from table
+		$query->from($this->table_name);
 
 		// Get the limit
 		if (array_key_exists('limit', $options) and is_numeric($options['limit']))
@@ -992,7 +987,20 @@ class Model {
 		// Get the order
 		if (array_key_exists('order', $options) && is_array($options['order']))
 		{
-			$query->order_by($options['order'][0], $options['order'][1]);
+			if (is_int(key($options['order'])))
+			{
+				$options['order'][$options['order'][0]] = $options['order'][1];
+				unset($options['order'][0], $options['order'][1]);
+			}
+
+			foreach ($options['order'] as $column => $direction)
+			{
+				if (strpos($column, '.') === false or strpos($column, $this->table_name.'.') === 0)
+				{
+					$query->order_by($column, $direction);
+					unset($options['order'][$column]);
+				}
+			}
 		}
 
 		// Get the group
@@ -1011,12 +1019,72 @@ class Model {
 
 		if (array_key_exists('where', $options) and is_array($options['where']))
 		{
-			foreach ($options['where'] as $conditional)
+			foreach ($options['where'] as $key => $conditional)
+			{
+				if (strpos($conditional[0], '.') === false or strpos($conditional[0], $this->table_name.'.') === 0)
+				{
+					$query->where($conditional[0], $conditional[1], $conditional[2]);
+					unset($options['where'][$key]);
+				}
+			}
+		}
+
+		if (array_key_exists('or_where', $options) and is_array($options['or_where']))
+		{
+			foreach ($options['or_where'] as $key => $conditional)
+			{
+				if (strpos($conditional[0], '.') === false or strpos($conditional[0], $this->table_name.'.') === 0)
+				{
+					$query->or_where($conditional[0], $conditional[1], $conditional[2]);
+					unset($options['or_where'][$key]);
+				}
+			}
+		}
+
+		// if there was a limit/offset on a join the query up till now will become a subquery
+		if ( ! empty($fullquery))
+		{
+			$fullquery->from(array($query, $this->table_name));
+			$query = $fullquery;
+		}
+
+		foreach ($joins as $join)
+		{
+			if ( ! array_key_exists('table', $join))
+			{
+				foreach ($join as $j)
+				{
+					$query->join($j['table'], $j['type'])
+						  ->on($j['on'][0], $j['on'][1], $j['on'][2]);
+				}
+			}
+			else
+			{
+				$query->join($join['table'], $join['type'])
+					  ->on($join['on'][0], $join['on'][1], $join['on'][2]);
+			}
+		}
+
+		// Get the order
+		if (array_key_exists('order', $options) && is_array($options['order']))
+		{
+			foreach ($options['order'] as $column => $direction)
+			{
+				$query->order_by($column, $direction);
+				unset($options['order'][$column]);
+			}
+		}
+
+		// put omitted where conditions back
+		if (array_key_exists('where', $options) and is_array($options['where']))
+		{
+			foreach ($options['where'] as $key => $conditional)
 			{
 				$query->where($conditional[0], $conditional[1], $conditional[2]);
 			}
 		}
 
+		// put omitted or_where conditions back
 		if (array_key_exists('or_where', $options) and is_array($options['or_where']))
 		{
 			foreach ($options['or_where'] as $conditional)
@@ -1031,8 +1099,6 @@ class Model {
 		return array('result' => $result, 'column_lookup' => $column_lookup);
 	}
 	
-		
-		
 	/**
 	 * Exactly as find() but returns the row count see {@link find} 
 	 * all the parameters and options are exactly the same as for find()
@@ -1043,9 +1109,8 @@ class Model {
 	 *
 	 * @param	int|string	$id			the primary key value
 	 * @param	srray		$options	the find options
-	 * @return	object		the result
+	 * @return	int|null 	the row count or null
 	 */
-	
 	public static function count($id = 'all', $options = array())
 	{
 		$instance = new static(self::IS_COUNT);
@@ -1055,19 +1120,16 @@ class Model {
 		return $count;
 	}
 	
-		
-	
 	/**
 	 * Generates then executes the count query.  This is used by {@link count}.
 	 * Please see {@link count} for parameter options and usage.
 	 *
 	 * @param	string|int	$id			the primary key to find
 	 * @param	array		$options	the array of options
-	 * @return	array	an array containing the query and column lookup map
+	 * @return	int|null 	the row count or null
 	 */
 	protected function count_query($id, $options = array())
 	{
-
 		// Start building the query
 		$query = DB::select(DB::expr('COUNT(*) AS mycount'));
 	
@@ -1104,7 +1166,17 @@ class Model {
 		}
 
 		// It's all built, now lets execute
-		return $query->execute()->get('mycount');
+		$count = $query->execute()->get('mycount');
+		
+		// Database_Result::get('mycount') returns a string | null
+		if ($count === null)
+		{
+			return null;
+		}
+		else
+		{
+			return (int) $count;
+		}
 	}
 }
 

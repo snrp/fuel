@@ -161,14 +161,15 @@ class Pagination extends Fuel\Core\Pagination {
 	 * @access public
 	 * @return mixed    The pagination links
 	 */
-	public static function create_links($config = array())
+	public static function create_links() //($config = array())
 	{
-	
+		/*
 		if ( ! empty($config))
 		{
 			parent::set_config($config);
 		}
-	
+		*/
+		
 		if ( ! empty(static::$view))
 		{		
 			return (string) \View::factory(static::$view);

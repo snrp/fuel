@@ -19,6 +19,7 @@ Fuel\Core\Autoloader::add_classes(array(
 	// Add classes you want to override here
 	// Example: 'View' => APPPATH.'classes/view.php',
 	'Pagination' => APPPATH.'classes/pagination.php',
+	'Uri' => APPPATH.'classes/uri.php',
 ));
 
 // Register the autoloader

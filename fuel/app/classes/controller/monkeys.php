@@ -1,30 +1,40 @@
 <?php
 class Controller_Monkeys extends Controller_Template {
 	
+	/* 
+	***********************************************************************
+	**/
 	public function action_index()
 	{
 		$per_page = 2;
-		$data['pagination'] = Pagination::create_links(array(
-								    'pagination_url' => \Uri::create('monkeys/index'),
-								    'total_items' => Model_Monkey::count('all'),
-								    'per_page' => $per_page,
-								    'uri_segment' => 3,
-								    'view' => 'common/pagination',
-								    'attributes' => array(
-										'prev_link' => array('title' => 'prev_link' ), 
-										'next_link' => array('title' => 'next_link' ),
-										'number_link' => array('title' => 'number_link' ),
-									),
+		
+		Pagination::set_config(array(
+		    'pagination_url' => \Uri::create('monkeys/index'),
+		    'total_items' => Model_Monkey::count('all'),
+		    'per_page' => $per_page,
+		    'uri_segment' => 3,
+		    'view' => 'common/pagination',
+		    'attributes' => array(
+				'prev_link' => array('title' => 'prev_link' ), 
+				'next_link' => array('title' => 'next_link' ),
+				'number_link' => array('title' => 'number_link' ),
+			),
 		));
-
+		
+		$data['pagination'] = Pagination::create_links();
+		
 		$data['monkeys'] = Model_Monkey::find('all', array(
-			'limit' => $per_page ,
-			'offset' => Pagination::$offset,
+							'limit' => $per_page ,
+							'offset' => Pagination::$offset,
 		));
+		
 		$this->template->title = "Monkeys";
 		$this->template->content = View::factory('monkeys/index', $data);
 	}
 	
+	/* 
+	***********************************************************************
+	**/
 	public function action_view($id = null)
 	{
 		$data['monkey'] = Model_Monkey::find($id);
