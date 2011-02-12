@@ -57,27 +57,6 @@ class Pagination {
 	 */
 	protected static $pagination_url;
 
-	
-	/**
-	 * @var	bool	Hide pagination nr when method == SEGMENT / GET and page_nr == 1 (not supported in static::CLASSIC)
-	 */
-	protected static $hide_1 = true;
-	
-	/**
-	 * @var	string	the functioning mode of the class is dictated by this 
-	 */
-	protected static $method = 'classic'; // static::CLASSIC
-	
-	const CLASSIC = 'classic';
-	const SEGMENT = 'segment';
-	const GET = 'get';
-
-
-	/**
-	 * @var	string	To avoid confusing settings when method == segment | get, the uri will be set in $uri, not in $pagination_url
-	 */
-	public static $uri;	
-
 	/**
 	 * @var	array	When creating the pagination links, this will be passed to Uri::create() as the second parameter
 	 */
@@ -89,9 +68,8 @@ class Pagination {
 	public static $get_variables = array();
 	
 	/**
-	 * @var	string	NOTICE: in $uri this must be preceded by colon: ':page' eg: 'monkeys/index/:page' 
-	 * this is because of how Uri::create works.
-	 * The segment placeholder when method == SEGMENT, 
+	 * @var	string	
+	 * The segment placeholder for the page nr method == ENGANCED, 
 	 * eg: monkeys/index/:page, or if method == GET, the get var name
 	 */
 	public static $variable_name = 'page';	
@@ -132,16 +110,6 @@ class Pagination {
 		{
 			static::${$key} = $value;
 		}
-
-		if ( ! (strtolower(static::$method) === static::CLASSIC) and ! empty(static::$pagination_url))
-		{
-			if (empty(static::$uri))
-			{
-				\Error::notice('Pagination::set_config() - "pagination_url" is only used with "method" => "classic", 
-					with "method" => "segment" or "get" you must use "uri" => "...". This exception was triggered  
-					because you did NOT set "uri", but you did set "pagination_url", and you set "method" => "'.static::$method.'"');
-			}
-		}  
 
 		static::initialize();
 	}
