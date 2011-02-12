@@ -58,24 +58,15 @@ class Pagination {
 	protected static $pagination_url;
 
 	/**
-	 * @var	array	When creating the pagination links, this will be passed to Uri::create() as the second parameter
-	 */
-	public static $variables = array();
-	
-	/**
 	 * @var	array	When creating the pagination links, this will be passed to Uri::create() as the third parameter
 	 */
 	public static $get_variables = array();
 	
 	/**
-	 * @var	string	
-	 * The segment placeholder for the page nr method == ENGANCED, 
-	 * eg: monkeys/index/:page, or if method == GET, the get var name
+	 * @var	string	The $_GET variable name
 	 */
 	public static $variable_name = 'page';	
 
-	//remember initial var settings to reset them every time when set_config() is called (but not the first time - in _init)
-	protected static $reset;
 
 	/**
 	 * Init
@@ -242,7 +233,7 @@ class Pagination {
 
 	/**
 	 * Create the the link url from page_nr and static::$pagination_url or static::$uri 
-	 * depending on the configured static::$method
+	 * depending on the configured static::$mode
 	 *
 	 * @access public
 	 * @param string $page_nr The page nr for the url
@@ -250,81 +241,74 @@ class Pagination {
 	 */
 	public static function create_link_url($page_nr)
 	{
-		// make local copyes to mess around with (and remove the 'static::' stuff so I can actually read the code :P )
-		$variables = static::$variables;
+		// make local copyes to modify
 		$get_variables = static::$get_variables;
-		$uri = static::$uri;
 		$variable_name = static::$variable_name;
-		$paceholder_variable = ':'.$variable_name;
 		
-		switch (strtolower(static::$method)) 
-		{
-			case static::SEGMENT:
-			
-				// $hide_1 acts similar to 'classic' method, meaning do not show the segment for page 1 
-				if($page_nr == 1 AND static::$hide_1 === true)
-				{
-					if (isset($variables[$variable_name])) 
-					{
-						unset($variables[$variable_name]);
-					}
-					
-					//remove ':page/' first in case there are other segments after it 
-					//or just ':page' if there is no slash after it (and therefore no other segments)
-					$uri = str_replace(array($paceholder_variable.'/', $paceholder_variable), '', $uri);
-				}
-				else
-				{
-					$variables = array_merge($variables, array($variable_name => $page_nr)); 
-
-					// there better be a ':page' in $uri
-					if (false === strpos($uri, $variable_name)) 
-					{
-						\Error::notice('Pagination::create_link_url(): The Pagination::$variable_name:"'.$variable_name.'" is missing from Pagination::$uri: "'.$uri.'"');
-						return '#';
-					}
-				}
+		switch (strtolower(static::$mode)) 
+		{			
+			default:	
+				\Error::notice('The value of Pagination::$mode is configured with an unknown and unsuported mode: "'.static::$mode.'". Falling back to "classic" mode');
+				//fall back to SEGMENT:
 				
-				return \Uri::create($uri, $variables, $get_variables);
+			case static::SEGMENT:
+				$page_nr = ($page_nr == 1) ? '' : '/'.$page_nr;
+				
+				$url = rtrim(static::$pagination_url, '/').$page_nr;
+				
+				return static::_compile_url($url, $get_variables);
 				
 		  	case static::GET:
-		  	
-		  		if($page_nr == 1 AND static::$hide_1 === true)
+		  		if($page_nr == 1 and isset($get_variables[$variable_name]))
 				{
-					if (isset($get_variables[$variable_name]))
-					{
-						unset($get_variables[$variable_name]);
-					}
+					unset($get_variables[$variable_name]);
 				}
 				else
 				{
 					$get_variables = array_merge($get_variables, array($variable_name => $page_nr)); 
 				}
-				return \Uri::create($uri, $variables, $get_variables);
-
-			default:	
-				//fall back to classic
-				\Error::notice('The value of Pagination::$method is configured with an unknown and unsuported method: "'.static::$method.'". Falling back to "classic" method');
 				
-			case static::CLASSIC:
-				$page_nr = ($page_nr == 1) ? '' : '/'.$page_nr;
-				return rtrim(static::$pagination_url, '/').$page_nr;
+				return static::_compile_url(static::$pagination_url, $get_variables);
 		}	
 	}
 	
+		
+ 	protected static function _compile_url($uri, $get_variables = array())
+ 	{ 
+		if (is_string($uri) and preg_match('#^\w+://# i', $uri)) //uri is of type 'http://...'
+		{
+			if ( ! empty($get_variables)) //append the get vars
+			{
+				$char = strpos($url, '?') === false ? '?' : '&';
+				foreach ($get_variables as $key => $val)
+				{
+					$url .= $char.$key.'='.$val;
+					$char = '&';
+				}
+			}
+			
+			return $uri;
+		}
+		else //uri is of type 'controller/action' or is null.
+		{
+			return Uri::create($uri, array(), $get_variables);
+		}
+ 	}
+	
+	
 	/**
-	 * Get current page from uri with the configured static::$method
+	 * Get current page from uri with the configured static::$mode
 	 *
 	 * @access public
 	 * @return int    The page nr if present in the request url
 	 */
 	public static function current_page()
 	{
-		switch (strtolower(static::$method)) 
+		switch (strtolower(static::$mode)) 
 		{
 			default:
-				\Error::notice('The value of Pagination::$method is configured with an unknown and unsuported method: "'.static::$method.'". Falling back to "classic" method');
-			case static::CLASSIC:
+				\Error::notice('The value of Pagination::$mode is configured with an unknown and unsuported mode: "'.static::$mode.'". Falling back to "classic" mode');
+				//fall back to segment:
 		  	case static::SEGMENT:
 		  		return (int) \URI::segment(static::$uri_segment);
 		  	case static::GET:

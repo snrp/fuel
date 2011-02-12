@@ -17,31 +17,30 @@ class Controller_Welcome extends Controller {
 	
 	
 		$config = array(
-			
-			'pagination_url' => 'welcome/index/:page',
+			'pagination_url' => 'http://localhost/fuel/welcome/index/', // or simply 'welcome/index'
 			'uri_segment' => 3, 
-
-			//'uri' => 'welcome/index/:page/', // <--- notice the colon (:)
-			'get_variables' => array('foo' => 'bar' ),
-
-			// 'variable_name' => 'page', // <--- notice NO colon (:)
-		
+			
 			'total_items' => 17,
 			'per_page' => 5,
+			
+			//'mode' => 'segment', //default
+			// optional:
+			//'get_variables' => array('foo' => 'bar' ),
+
+
 		);
 		
 		$config = array(	
+			
 			'pagination_url' => 'welcome/index',
-			'uri_segment' => 3, 
-
-			//'uri' => 'welcome/index/:page/', // <--- notice the colon (:)
+			
+			'total_items' => 17,
+			'per_page' => 5,		
+				
+			'mode' => 'get',
 			'get_variables' => array('foo' => 'bar' ),
 
-			// 'variable_name' => 'page', // <--- notice NO colon (:)
-			// 'place' => 'autodetect' (default) | segment | get
-		
-			'total_items' => 17,
-			'per_page' => 5,
+			// 'variable_name' => 'page' //default
 		);
 		
 		Pagination::set_config($config);
