@@ -67,6 +67,15 @@ class Pagination {
 	 */
 	public static $variable_name = 'page';	
 
+	/**
+	 * @var	string	the operating mode 
+	 */
+	protected static $mode = 'segment';
+	
+	const SEGMENT = 'segment';
+	const GET = 'get';
+
+
 
 	/**
 	 * Init
@@ -232,12 +241,12 @@ class Pagination {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Create the the link url from page_nr and static::$pagination_url or static::$uri 
+	 * Create the the link url from $page_nr and static::$pagination_url
 	 * depending on the configured static::$mode
 	 *
 	 * @access public
-	 * @param string $page_nr The page nr for the url
-	 * @return string    The pagination_url
+	 * @param string 	 The $page_nr for the url
+	 * @return string    The url for the pagination link
 	 */
 	public static function create_link_url($page_nr)
 	{
@@ -259,9 +268,12 @@ class Pagination {
 				return static::_compile_url($url, $get_variables);
 				
 		  	case static::GET:
-		  		if($page_nr == 1 and isset($get_variables[$variable_name]))
+		  		if($page_nr == 1)
 				{
-					unset($get_variables[$variable_name]);
+					if (isset($get_variables[$variable_name]))
+					{
+						unset($get_variables[$variable_name]);
+					}
 				}
 				else
 				{
@@ -272,26 +284,36 @@ class Pagination {
 		}	
 	}
 	
-		
- 	protected static function _compile_url($uri, $get_variables = array())
+	// --------------------------------------------------------------------
+
+	/**
+	 * Compile the url from $pagination_url and $get_variables
+	 * This is a tweaked version of Uri::create()
+	 *
+	 * @access public
+	 * @param string|null 	 $pagination_url can be either of type 'http://...' or of type 'controller/action' or even null. If null, Uri::create willget the current url
+	 * @param array 	 optional $get_variables to append to the url. 
+	 * @return string    The url for the pagination link
+	 */
+ 	protected static function _compile_url($pagination_url, $get_variables = array())
  	{ 
-		if (is_string($uri) and preg_match('#^\w+://# i', $uri)) //uri is of type 'http://...'
+		if (is_string($pagination_url) and preg_match('#^\w+://# i', $pagination_url)) //$pagination_url is of type 'http://...'
 		{
 			if ( ! empty($get_variables)) //append the get vars
 			{
-				$char = strpos($url, '?') === false ? '?' : '&';
+				$char = strpos($pagination_url, '?') === false ? '?' : '&';
 				foreach ($get_variables as $key => $val)
 				{
-					$url .= $char.$key.'='.$val;
+					$pagination_url .= $char.$key.'='.$val;
 					$char = '&';
 				}
 			}
 			
-			return $uri;
+			return $pagination_url;
 		}
-		else //uri is of type 'controller/action' or is null.
+		else //$pagination_url is of type 'controller/action' or is null.
 		{
-			return Uri::create($uri, array(), $get_variables);
+			return Uri::create($pagination_url, array(), $get_variables);
 		}
  	}
 	
