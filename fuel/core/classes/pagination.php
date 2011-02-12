@@ -58,6 +58,26 @@ class Pagination {
 	protected static $pagination_url;
 
 	/**
+	 * @var	array	When creating the pagination links, this will be passed to Uri::create() as the third parameter
+	 */
+	public static $get_variables = array();
+	
+	/**
+	 * @var	string	The $_GET variable name
+	 */
+	public static $variable_name = 'page';	
+
+	/**
+	 * @var	string	the operating mode 
+	 */
+	protected static $mode = 'segment';
+	
+	const SEGMENT = 'segment';
+	const GET = 'get';
+
+
+
+	/**
 	 * Init
 	 *
 	 * Loads in the config and sets the variables
@@ -107,7 +127,7 @@ class Pagination {
 
 		static::$total_pages = ceil(static::$total_items / static::$per_page) ?: 1;
 
-		static::$current_page = (int) \URI::segment(static::$uri_segment);
+		static::$current_page = static::current_page();
 
 		if (static::$current_page > static::$total_pages)
 		{
@@ -155,8 +175,7 @@ class Pagination {
 			}
 			else
 			{
-				$url = ($i == 1) ? '' : '/'.$i;
-				$pagination .= \Html::anchor(rtrim(static::$pagination_url, '/') . $url, $i);
+				$pagination .= \Html::anchor(static::create_link_url($i), $i);
 			}
 		}
 
@@ -188,7 +207,7 @@ class Pagination {
 		else
 		{
 			$next_page = static::$current_page + 1;
-			return \Html::anchor(rtrim(static::$pagination_url, '/').'/'.$next_page, $value);
+			return \Html::anchor(static::create_link_url($next_page), $value);
 		}
 	}
 
@@ -215,10 +234,110 @@ class Pagination {
 		else
 		{
 			$previous_page = static::$current_page - 1;
-			$previous_page = ($previous_page == 1) ? '' : '/' . $previous_page;
-			return \Html::anchor(rtrim(static::$pagination_url, '/') . $previous_page, $value);
+			return \Html::anchor(static::create_link_url($previous_page), $value);
 		}
 	}
+	
+	// --------------------------------------------------------------------
+
+	/**
+	 * Create the the link url from $page_nr and static::$pagination_url
+	 * depending on the configured static::$mode
+	 *
+	 * @access public
+	 * @param string 	 The $page_nr for the url
+	 * @return string    The url for the pagination link
+	 */
+	public static function create_link_url($page_nr)
+	{
+		// make local copyes to modify
+		$get_variables = static::$get_variables;
+		$variable_name = static::$variable_name;
+		
+		switch (strtolower(static::$mode)) 
+		{			
+			default:	
+				\Error::notice('The value of Pagination::$mode is configured with an unknown and unsuported mode: "'.static::$mode.'". Falling back to "classic" mode');
+				//fall back to SEGMENT:
+				
+			case static::SEGMENT:
+				$page_nr = ($page_nr == 1) ? '' : '/'.$page_nr;
+				
+				$url = rtrim(static::$pagination_url, '/').$page_nr;
+				
+				return static::_compile_url($url, $get_variables);
+				
+		  	case static::GET:
+		  		if($page_nr == 1)
+				{
+					if (isset($get_variables[$variable_name]))
+					{
+						unset($get_variables[$variable_name]);
+					}
+				}
+				else
+				{
+					$get_variables = array_merge($get_variables, array($variable_name => $page_nr)); 
+				}
+				
+				return static::_compile_url(static::$pagination_url, $get_variables);
+		}	
+	}
+	
+	// --------------------------------------------------------------------
+
+	/**
+	 * Compile the url from $pagination_url and $get_variables
+	 * This is a tweaked version of Uri::create()
+	 *
+	 * @access public
+	 * @param string|null 	 $pagination_url can be either of type 'http://...' or of type 'controller/action' or even null. If null, Uri::create willget the current url
+	 * @param array 	 optional $get_variables to append to the url. 
+	 * @return string    The url for the pagination link
+	 */
+ 	protected static function _compile_url($pagination_url, $get_variables = array())
+ 	{ 
+		if (is_string($pagination_url) and preg_match('#^\w+://# i', $pagination_url)) //$pagination_url is of type 'http://...'
+		{
+			if ( ! empty($get_variables)) //append the get vars
+			{
+				$char = strpos($pagination_url, '?') === false ? '?' : '&';
+				foreach ($get_variables as $key => $val)
+				{
+					$pagination_url .= $char.$key.'='.$val;
+					$char = '&';
+				}
+			}
+			
+			return $pagination_url;
+		}
+		else //$pagination_url is of type 'controller/action' or is null.
+		{
+			return Uri::create($pagination_url, array(), $get_variables);
+		}
+ 	}
+	
+	
+	/**
+	 * Get current page from uri with the configured static::$mode
+	 *
+	 * @access public
+	 * @return int    The page nr if present in the request url
+	 */
+	public static function current_page()
+	{
+		switch (strtolower(static::$mode)) 
+		{
+			default:
+				\Error::notice('The value of Pagination::$mode is configured with an unknown and unsuported mode: "'.static::$mode.'". Falling back to "classic" mode');
+				//fall back to segment:
+		  	case static::SEGMENT:
+		  		return (int) \URI::segment(static::$uri_segment);
+		  	case static::GET:
+		  		return (int) \Input::get(static::$variable_name, 1);
+  		}
+	}
+	
 }
 
 /* End of file pagination.php */
