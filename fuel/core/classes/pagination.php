@@ -137,7 +137,7 @@ class Pagination {
 		{
 			if (empty(static::$uri))
 			{
-				throw new \Fuel_Exception('Pagination::set_config() - "pagination_url" is only used with "method" => "classic", 
+				\Error::notice('Pagination::set_config() - "pagination_url" is only used with "method" => "classic", 
 					with "method" => "segment" or "get" you must use "uri" => "...". This exception was triggered  
 					because you did NOT set "uri", but you did set "pagination_url", and you set "method" => "'.static::$method.'"');
 			}
@@ -273,7 +273,8 @@ class Pagination {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Create the the link url from page_nr and pagination_url via the configured $method
+	 * Create the the link url from page_nr and static::$pagination_url or static::$uri 
+	 * depending on the configured static::$method
 	 *
 	 * @access public
 	 * @param string $page_nr The page nr for the url
@@ -281,7 +282,7 @@ class Pagination {
 	 */
 	public static function create_link_url($page_nr)
 	{
-		// make local copyes to mess around with (and remove the static:: stuff so I can actually read the code :P )
+		// make local copyes to mess around with (and remove the 'static::' stuff so I can actually read the code :P )
 		$variables = static::$variables;
 		$get_variables = static::$get_variables;
 		$uri = static::$uri;
@@ -292,23 +293,23 @@ class Pagination {
 		{
 			case static::SEGMENT:
 			
+				// $hide_1 acts similar to 'classic' method, meaning do not show the segment for page 1 
 				if($page_nr == 1 AND static::$hide_1 === true)
 				{
-					//the $variables[':page'] should not be set anyway, but just in case: 
 					if (isset($variables[$variable_name])) 
 					{
 						unset($variables[$variable_name]);
 					}
 					
-					//remove ':page/' (in case there are other segments after it), 
-					//or just ':page' if there is no slash after it (and therefor no other segments)
+					//remove ':page/' first in case there are other segments after it 
+					//or just ':page' if there is no slash after it (and therefore no other segments)
 					$uri = str_replace(array($paceholder_variable.'/', $paceholder_variable), '', $uri);
 				}
 				else
 				{
 					$variables = array_merge($variables, array($variable_name => $page_nr)); 
 
-					// there better be a ':page' or equivalent in $uri
+					// there better be a ':page' in $uri
 					if (false === strpos($uri, $variable_name)) 
 					{
 						\Error::notice('Pagination::create_link_url(): The Pagination::$variable_name:"'.$variable_name.'" is missing from Pagination::$uri: "'.$uri.'"');
@@ -319,10 +320,9 @@ class Pagination {
 				return \Uri::create($uri, $variables, $get_variables);
 				
 		  	case static::GET:
-		  		
+		  	
 		  		if($page_nr == 1 AND static::$hide_1 === true)
 				{
-					//the $get_variables[':page'] should not be set anyway, but just in case: 
 					if (isset($get_variables[$variable_name]))
 					{
 						unset($get_variables[$variable_name]);
